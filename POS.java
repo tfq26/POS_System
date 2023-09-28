@@ -19,19 +19,49 @@ public class POS {
 
 	private HashMap<Integer, Item> directory = new HashMap<>(); // Hashmap containing the Key with the associated item
 	
-	private ArrayList<Item> shoppingList = new ArrayList<>(); // ArrayList containing the item and the quantity of the item
+	private ArrayList<ItemEntry> shoppingList = new ArrayList<>(); // ArrayList containing the item and the quantity of the item
 	
 	private String errorMsg = "";
+	
+	private double totalCost = 0.0;
 
 	public POS() {
 		
 	}
 	
-	public ArrayList<Item> getShoppingList(){
+	public ArrayList<ItemEntry> getShoppingList(){
 		
 		return shoppingList;
 		
 	}
+	
+	private ArrayList<Item> getShoppingListEntries(){
+		
+		ArrayList<Item> returnList = new ArrayList<>();
+		
+			for(int i = 0; i < shoppingList.size(); i++) {
+				
+				returnList.add(shoppingList.get(i).getItem());
+				
+			}
+			
+			return returnList;
+		
+	}
+	
+//	private void printShoppingList(){
+//	
+//		for(int i = 0; i < shoppingList.size(); i++) {
+//			
+//			Item temp = shoppingList.get(i).getItem();
+//			
+//			System.out.println(temp.getName() + " " + temp.getItemCount());
+//			
+//		}
+//		
+//		System.out.println();
+//		
+//	}
 	
 	public void addToDirectory(Item userItem) { // Using the code as the key for the item value
 		
@@ -42,24 +72,39 @@ public class POS {
 	
 	public void addToShoppingList(int itemCode) {
 		
-		if(containsKey(itemCode)) {
-			
-			Item temp = directory.get(itemCode);
-			
-			if(shoppingList.contains(temp)) {
-			
-				temp.increment();
-			
-			} else {
-			
-			temp.setItemQuantity(1);
-			
-			this.shoppingList.add(temp);
-			
-			}
+		System.out.println("Running through this method");
 		
+		if(containsKey(itemCode)) {
+		
+		Item tempItem = directory.get(itemCode);
+		
+		ItemEntry tempEntry = new ItemEntry(tempItem);;
+		
+		if(getShoppingListEntries().contains(tempItem)) {
+			
+			System.out.println("Already in list");
+			
+			int index = getShoppingListEntries().indexOf(tempItem);
+			
+			tempEntry = shoppingList.get(index);
+			
+			tempEntry.increment();
+			
+			System.out.println("Finished Increment, New Count: " + tempEntry.getCount()
+			
+					+ " ShoppingList Size: " + shoppingList.size());
+			
+		} else {
+			
+			shoppingList.add(tempEntry);
+			
+			System.out.println("Added to list."+ " ShoppingList Size: " + shoppingList.size());
+			
 		}
 		
+		totalCost += tempEntry.getItem().getPrice();
+		
+		}
 	}
 	
 	private int generateCode() { // Generates a code for each item because each item is kept with the price in the map
@@ -84,7 +129,11 @@ public class POS {
 		
 		if(containsKey(userCode)) {
 		
-		return (directory.get(userCode).getName() + "   " + shoppingList.get(userCode).getItemQuantity())	;
+		for(int i = 0; i < shoppingList.size(); i++) {
+			
+			return shoppingList.get(i).getItem().getName() + "  ";
+			
+		}
 		
 		} else {
 			
@@ -93,6 +142,8 @@ public class POS {
 			return null;
 			
 		}
+		
+		return "";
 	}
 	
 	public Item getItem(int userCode) throws NullPointerException{
@@ -103,9 +154,9 @@ public class POS {
 			
 			for(int i = 0; i < shoppingList.size(); i++) {
 				
-				if(shoppingList.get(i).equals(temp)) {
+				if(shoppingList.get(i).getItem().equals(temp)) {
 					
-					return shoppingList.get(i);
+					return shoppingList.get(i).getItem();
 					
 				}
 				
@@ -128,18 +179,6 @@ public class POS {
 		
 		DecimalFormat df = new DecimalFormat("##.##");
 		
-		df.setRoundingMode(java.math.RoundingMode.CEILING);
-		
-		double totalCost = 0.0;
-		
-		for (int i = 0; i < shoppingList.size(); i++) {
-		   
-			totalCost += shoppingList.get(i).getPrice() * shoppingList.get(i).getItemQuantity();
-			
-		//	System.out.println("Total: " + totalCost + " = item price (" + key.getPrice() + ") * item quantity(" + shoppingList.get(key) + ")");
-			
-		}
-		
 		return df.format(totalCost);
 		
 	}
@@ -148,98 +187,17 @@ public class POS {
 		
 		if(directory.containsKey(userCode)) {
 			
+			this.setError("");
+			
 			return true;
 			
 		} else {
 			
-			this.setError("<html>Item does not exist<br/>  Please try again</html>");
+			this.setError("<html>Item does not exist<br/>Please try again</html>");
 			
 			return false;
 			
 		}
-		
-	}
-	
-
-	public void exportToFile() {
-		
-		DecimalFormat df = new DecimalFormat("##.##");
-		
-		df.setRoundingMode(java.math.RoundingMode.CEILING);
-		
-		PrintWriter output = null;
-		
-		double receiptNumber = 0;
-		
-		File receiptFile = new File("Receipt" + java.time.LocalDate.now() + ".txt");
-		
-			try {
-			
-		output = new PrintWriter(new FileWriter(receiptFile));
-			
-		} catch (IOException e) {
-			
-			System.out.println("Error writing to file");
-			
-		}
-		
-		output.println(String.format("Receipt #: %04.0f", receiptNumber));
-		
-		for(int i = 0; i < shoppingList.size(); i++) {
-			
-			String itemTotalPrice = df.format(shoppingList.get(i).getPrice() * shoppingList.get(i).getItemQuantity());
-			
-			output.println("Item: " + shoppingList.get(i).getName() + " Quantity: " + this.shoppingList.get(i)
-			
-			+ "\nPrice per item: $" + shoppingList.get(i).getPrice() + ", total cost for item: $" + itemTotalPrice + "\n");
-			
-		}
-		
-		output.println("Total: $" + this.getTotalCost());
-		
-		trackReceiptNumber(receiptFile);
-		
-		output.close();
-		
-	}
-	
-	private void trackReceiptNumber(File inputFile) {
-		
-		Scanner fileInput = null;
-		
-		try {
-			
-			fileInput = new Scanner((inputFile));
-			
-		} catch (IOException e) {
-			
-			System.out.println("Error reading file");
-			
-		}
-		
-		String currentNum = "";
-		
-		while(fileInput.hasNextLine()) {
-			
-			System.out.println(fileInput.nextLine());
-			
-		}
-		
-		System.out.println(currentNum);
-		
-	}
-	
-	public ArrayList<Item> getFromShoppingList() {
-		
-		ArrayList<Item> returnList = new ArrayList <Item>();
-		
-		for(int i = 0; i < shoppingList.size(); i++) {
-			
-			returnList.add(shoppingList.get(i));
-			
-		}
-		
-		return returnList;
 		
 	}
 	
@@ -261,19 +219,47 @@ public class POS {
 					
 				}
 				
-			String cursor = fileReader.next();
+				String cursor = fileReader.next();
 			
+				String[] itemsFromFile = null;
+				
 				while(fileReader.hasNext()) {
 					
-					System.out.println(cursor);
+					cursor = fileReader.next();
+					
+					itemsFromFile = cursor.split(",");
+					
+					for(int i = 0; i < itemsFromFile.length; i += 4) {
+						
+						String tempName = itemsFromFile[0];
+						
+						double tempPrice = Double.parseDouble(itemsFromFile[1]);
+						
+						int tempCode = Integer.parseInt(itemsFromFile[2]);
+						
+						double tempQuantity = Double.parseDouble(itemsFromFile[3]);
+						
+						Item temp = new Item(tempName, tempPrice, tempCode, tempQuantity); // Name, Price, Code, Quantity
+						
+						this.directory.put(tempCode, temp);
+						
+					}
+										
+			}
+				
+				for(Integer i : this.directory.keySet()) {
+					
+					System.out.println("Code: " + i + ", Item: " + this.directory.get(i).getName() + " Quantity: " + this.directory.get(i).getItemQuantity());
 					
 				}
-		
+			
 	}
 	
 	public boolean checkCard(String cardNumString) { // Luhns Algorithm with test value: 5113615648623237 
 		
 		boolean cardIsValid;
+		
+		cardNumString = cardNumString.replaceAll("\\s","");
 		
 		Long cardNum = 0L;
 		
@@ -389,6 +375,22 @@ public class POS {
 	
 	}
 	
+	public Item getItemFromSearch(String userSearch) {
+		
+		for(Integer temp : directory.keySet()) {
+			
+			if(directory.get(temp).getName().equals(userSearch)) {
+				
+				return directory.get(temp);
+				
+			}
+			
+		}
+		
+		return null;
+		
+	}
+	
 	public void setError(String posError) {
 		
 		errorMsg = posError;
@@ -400,5 +402,104 @@ public class POS {
 		return this.errorMsg;
 		
 	}
+	
+	public void removeLastItem() {
+		
+		ItemEntry lastItem = shoppingList.get(shoppingList.size() - 1);
+		
+			if(lastItem.getCount() > 1) {
+	
+			lastItem.decrement();
+		
+			} else {
+			
+			shoppingList.remove(lastItem);
+			
+			}
+			
+		totalCost -= lastItem.getItem().getPrice();
+	}
+	
+	public void exportToFile(File receiptFile) {
+		
+		DecimalFormat df = new DecimalFormat("##.##");
+		
+		double receiptNumber = 0.0;
+		
+		df.setRoundingMode(java.math.RoundingMode.CEILING);
+		
+		PrintWriter output = null;
+		
+		try {
+			
+			output = new PrintWriter(new FileWriter(receiptFile));
+			
+		} catch (IOException e) {
+			
+			System.out.println("Error writing to file");
+			
+		}
+		
+		receiptNumber = trackReceiptNumber(receiptFile) + 1;
+		
+		output.println(String.format("Receipt #: %04.0f", receiptNumber));
+		
+		for(int i = 0; i < getShoppingList().size(); i++) {
+			
+		//	String itemTotalPrice = df.format();
+			
+			ItemEntry printItemEntry = shoppingList.get(i);
+			
+			Item printItem = shoppingList.get(i).getItem();
+			
+			double itemTotalPrice = printItem.getPrice() * shoppingList.get(i).getCount();
+			
+			output.println("Item: " + printItem.getName() + " Quantity: " + printItemEntry.getCount()
+			
+			+ "\nPrice per item: $" + printItem.getPrice() + "\n");
+			
+		}
+		
+		output.println("Total: $" + this.getTotalCost());
+		
+		output.close();
+		
+	}
+
+	public int trackReceiptNumber(File receiptFile) {
+		
+		Scanner fileInput = null;
+		
+		try {
+			
+			fileInput = new Scanner(new FileInputStream(receiptFile)).useDelimiter("[^0-9]+");
+			
+		} catch (IOException e) {
+			
+			System.out.println("Error reading file");
+			
+		}
+		
+		int receiptNum = 0;
+		
+		while(fileInput.hasNext()) {
+		
+			receiptNum = fileInput.nextInt();
+		
+		}
+		
+		if(!fileInput.hasNext()) {
+			
+			return 1;
+			
+		}
+			fileInput.close();
+			
+		return receiptNum;
+		
+	}
+	
+	
+	
 
 }
