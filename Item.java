@@ -16,6 +16,8 @@ public class Item {
 		
 		itemPrice = 0.0;
 		
+		itemQuantity = 0;
+		
 	}
 	
 	public Item(String userName, double userPrice) {
@@ -33,6 +35,20 @@ public class Item {
 		itemPrice = userPrice;
 		
 		itemCode = userItemCode;
+		
+		itemQuantity = 1;
+		
+	}
+	
+	public Item(String userName, double userPrice, int userItemCode, double userQuantity) {
+		
+		itemName = userName;
+		
+		itemPrice = userPrice;
+		
+		itemCode = userItemCode;
+		
+		itemQuantity = userQuantity;
 		
 	}
 	
@@ -62,26 +78,16 @@ public class Item {
 		
 	}
 	
-	public void increment() {
-		
-		this.itemQuantity++;
-		
-	}
-	
 	public double getPrice() {
 		
 		return this.itemPrice;
 		
 	}
 	
-	
 	public double getItem() {
 		
 		return this.itemPrice;
 		
 	}
-
-	
-	
 	
 }
